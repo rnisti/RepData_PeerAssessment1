@@ -5,21 +5,58 @@ output:
     keep_md: true
 ---
 
-
 ## Loading and preprocessing the data
+activity <- read.csv("activity.csv")
 
 
 
 ## What is mean total number of steps taken per day?
+###Calculate the total number of steps taken per day
+activity_total <- aggregate(steps ~ date, data = activity, FUN = sum)
+hist(activity_total$steps, col = "Blue", xlab = "Steps")
 
-
+###Calculate and report the mean and median of the total number of steps taken per day
+mean(activity_total$steps)
+[1] 10766.19
+median(activity_total$steps)
+[1] 10765
 
 ## What is the average daily activity pattern?
+library(dplyr)
+library(plyr)
+activity_interval <- aggregate(steps ~ interval, data = activity, FUN = mean, na.rm = TRUE)
+plot(activity_interval$interval, activity_interval$steps, type = "l", xlab = "Interval", ylab = "Steps")
 
-
+###Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+x <- max(activity_interval$steps)
+subset(activity_interval, activity_interval$steps == x)
+    interval    steps
+104      835 206.1698
 
 ## Imputing missing values
+navalues <- subset(activity, is.na(steps))
+nrow(navalues)
 
+x <- merge(navalues, activity_interval, by = c("interval"))
+y <- x[,c(4,3,1)]
+names(y) <- c("steps", "date", "interval")
+
+hist(y$steps, breaks = 20 ,col = "Blue", xlab = "Steps")
+
+mean(y$steps)
+[1] 37.3826
+median(y$steps)
+[1] 34.11321
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+activity_weekdays <- cbind(activity , weekdays(as.Date(activity$date)))
+names(activity_weekdays ) <- c("steps", "date", "interval", "weekday")
+activity_weekdays  <- cbind(activity_weekdays , ifelse(activity_weekdays $weekday %in% c("sábado","domingo"), "Weekend", "Weekday"))
+names(activity_weekdays ) <- c("steps", "date", "interval","weekday", "categori")
+weekend <- aggregate(steps ~ categori+interval, data=activity_weekdays , FUN=mean)
+
+library(lattice)
+xyplot(steps~interval|factor(categori),layout=c(1,2),xlab="Interval",ylab="Steps",type="l",lty=1,data=weekend )
+
